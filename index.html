@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EmployeeDetails</title>
+  </head>
+  <body>
+    <h2>Enter Employee Details :</h2>
+    <form id="employeeForm">
+      <input
+        type="text"
+        id="employeeName"
+        placeholder="Employee Name"
+        required
+      />
+      <input
+        type="email"
+        id="employeeEmail"
+        placeholder="Employee Email"
+        required
+      />
+      <input type="text" id="location" placeholder="Location" required />
+      <button type="submit">Submit</button>
+    </form>
+    <br />
+
+    <table border="1">
+      <thead>
+        <tr>
+          <th>EmployeeID</th>
+          <th>EmployeeName</th>
+          <th>EmployeeEmail</th>
+          <th>Location</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <br />
+    <div id="employeeDetails"></div>
+
+    <script>
+      const apiUrl = "http://localhost:8080/employees";
+
+      // Fetch and display employees
+      function employees() {
+        fetch(apiUrl)
+          .then((response) => response.json())
+          .then((result) => {
+            let rows = "";
+            result.forEach((e) => {
+              rows += `
+                            <tr>
+                                <td>${e.employeeID}</td>
+                                <td>${e.employeeName}</td>
+                                <td>${e.employeeEmail}</td>
+                                <td>${e.location}</td>
+                                <td>
+                                <button onclick="getDetails('${e.employeeID}')">Get Details</button>
+                                </td>
+                            </tr>`;
+            });
+            document.getElementById("tbody").innerHTML = rows;
+          });
+      }
+
+      // Call initially to load employees
+      employees();
+
+      // Handle form submit
+      document
+        .getElementById("employeeForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault(); // prevent page reload
+
+          const data = {
+            employeeName: document.getElementById("employeeName").value,
+            employeeEmail: document.getElementById("employeeEmail").value,
+            location: document.getElementById("location").value,
+          };
+
+          fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          })
+            .then((response) => response.json())
+            .then((result) => {
+              employees(); // refresh table
+              this.reset(); // clear form
+            });
+        });
+
+      // Get details of one employee by ID
+      function getDetails(id) {
+        fetch(`${apiUrl}/${id}`)
+          .then((response) => {
+            if (!response.ok) throw new Error("Employee not found");
+            return response.json();
+          })
+          .then((emp) => {
+            document.getElementById("employeeDetails").innerHTML = `
+                        <h3>Employee Details</h3>
+                        <p><b>ID:</b> ${emp.employeeID}</p>
+                        <p><b>Name:</b> ${emp.employeeName}</p>
+                        <p><b>Email:</b> ${emp.employeeEmail}</p>
+                        <p><b>Location:</b> ${emp.location}</p>
+                    `;
+          })
+          .catch((error) => {
+            document.getElementById(
+              "employeeDetails"
+            ).innerHTML = `<p style="color:red">${error.message}</p>`;
+          });
+      }
+    </script>
+  </body>
+</html>
